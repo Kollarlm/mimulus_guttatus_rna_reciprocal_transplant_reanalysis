@@ -24,6 +24,15 @@ L1_aligned_dataset_pi = do.call(rbind, lapply(files,fread))
 files=list.files(pattern = ".gstat")
 L1_aligned_dataset_gstat = do.call(rbind, lapply(files,fread))
 
+# Files for Tajimas D
+files=list.files(pattern = ".tajD")
+L1_aligned_dataset_tajD = do.call(rbind, lapply(files,fread))
+
+# Removed NAs for tajimas D
+L1_aligned_dataset_nona_tajD <- na.omit(L1_aligned_dataset_tajD)
+colnames(L1_aligned_dataset_nona_tajD) <- c("gene", "scaffold", "gene_start", "gene_end","gene_len", "IA_gene_cov", "IA_S", "TajD_IA", "CP_gene_cov", "CP_S", "TajD_CP", "tot_gene_cov", "tot_S", "TajD_tot")
+
+
 ## Removed windows with average depth greater than 2 standard deviations
 
 L1_SD <- L1_aligned_dataset_pi %>% 
@@ -356,4 +365,139 @@ L1_aligned_dataset_gstat_filtered_8small_anova <- rbind(L1_aligned_dataset_gstat
 
 library(car)
 summary(aov(G_stat ~ karyo,L1_aligned_dataset_gstat_filtered_8small_anova))
-boxplot(G_stat ~ karyo,L1_aligned_dataset_gstat_filtered_8small_anova)
+boxplot.8.gstat <- boxplot(G_stat ~ karyo,L1_aligned_dataset_gstat_filtered_8small_anova)
+
+tiff("./figures/boxplot.8.gstat.png", width = 20, height = 30, units = "cm",res = 300)
+print(boxplot.8.gstat)
+dev.off()
+
+
+######### barplots of Tajimas D ##########
+
+L1_aligned_dataset_nona_tajD$scaffold <- gsub("chr","", as.character(L1_aligned_dataset_nona_tajD$scaffold))
+L1_aligned_dataset_nona_tajD$scaffold <- as.numeric(L1_aligned_dataset_nona_tajD$scaffold)
+
+data_cum_L1_D <- L1_aligned_dataset_nona_tajD %>% 
+  group_by(scaffold) %>% 
+  summarise(max_bp=max(gene_end)) %>% 
+  mutate(bp_add=lag(cumsum(max_bp), default = 0)) %>% 
+  select(scaffold, bp_add)
+
+L1_aligned_dataset_nona_tajD <- L1_aligned_dataset_nona_tajD %>% 
+  inner_join(data_cum_L1_D, by ="scaffold") %>% 
+  mutate(bp_cum = gene_end + bp_add)
+
+# Adding inverted vs noninverted to the chromosomes of interest.
+L1_aligned_dataset_nona_tajD_5_NOTinv1 <-  L1_aligned_dataset_nona_tajD %>% 
+  filter(scaffold=="5") %>% 
+  filter(bp_cum < 67487358+13650670) 
+L1_aligned_dataset_nona_tajD_5_NOTinv1$karyo <- "notinv"
+
+L1_aligned_dataset_nona_tajD_5_NOTinv2 <-  L1_aligned_dataset_nona_tajD %>% 
+  filter(scaffold=="5") %>% 
+  filter(bp_cum > 67487358+17847181)
+L1_aligned_dataset_nona_tajD_5_NOTinv2$karyo <- "notinv"
+
+L1_aligned_dataset_nona_tajD_5_NotINV_fig <- rbind(L1_aligned_dataset_nona_tajD_5_NOTinv2, L1_aligned_dataset_nona_tajD_5_NOTinv1)
+
+L1_aligned_dataset_nona_tajD_5_inv <-  L1_aligned_dataset_nona_tajD %>% 
+  filter(scaffold=="5") %>% 
+  filter(between(bp_cum, (67487358+13650670),(67487358+17847181) ))
+L1_aligned_dataset_nona_tajD_5_inv$karyo <- "inv 5"
+
+L1_aligned_dataset_nona_tajD_5 <- rbind(L1_aligned_dataset_nona_tajD_5_inv, L1_aligned_dataset_nona_tajD_5_NotINV_fig)
+
+################################################################################
+
+L1_aligned_dataset_nona_tajD_8_NOTinv1 <-  L1_aligned_dataset_nona_tajD %>% 
+  filter(scaffold=="8") %>% 
+  filter(bp_cum < (118900276+850429 )) 
+L1_aligned_dataset_nona_tajD_8_NOTinv1$karyo <- "notinv"
+
+L1_aligned_dataset_nona_tajD_8_NOTinv2 <-  L1_aligned_dataset_nona_tajD %>% 
+  filter(scaffold=="8") %>% 
+  filter(bp_cum > (118900276+7604769))
+L1_aligned_dataset_nona_tajD_8_NOTinv2$karyo <- "notinv"
+
+L1_aligned_dataset_nona_tajD_8_NotINV_fig <- rbind(L1_aligned_dataset_nona_tajD_8_NOTinv1, L1_aligned_dataset_nona_tajD_8_NOTinv2)
+
+L1_aligned_dataset_nona_tajD_8_inv <-  L1_aligned_dataset_nona_tajD %>% 
+  filter(scaffold=="8") %>% 
+  filter(between(bp_cum, (118900276+850429),(118900276+7604769)))
+L1_aligned_dataset_nona_tajD_8_inv$karyo <- "inv 8"
+
+#removing small inversion from 8 inversion
+L1_aligned_dataset_nona_tajD_8_inv_wosmalL1 <-  L1_aligned_dataset_nona_tajD_8_inv %>% 
+  filter(scaffold=="8") %>% 
+  filter(bp_cum < (118900276+1032334)) 
+
+L1_aligned_dataset_nona_tajD_8_inv_wosmall2 <-  L1_aligned_dataset_nona_tajD_8_inv %>% 
+  filter(scaffold=="8") %>% 
+  filter(bp_cum > (118900276+1246126))
+
+L1_aligned_dataset_nona_tajD_8 <- rbind(L1_aligned_dataset_nona_tajD_8_inv_wosmalL1, L1_aligned_dataset_nona_tajD_8_inv_wosmall2, L1_aligned_dataset_nona_tajD_8_NotINV_fig)
+
+################################################################################
+
+L1_aligned_dataset_nona_tajD_8small_inv <-  L1_aligned_dataset_nona_tajD %>% 
+  filter(scaffold=="8") %>% 
+  filter(between(bp_cum, (118900276+1032334), (118900276+1246126)))
+L1_aligned_dataset_nona_tajD_8small_inv$karyo <- "inv 8 SMALL"
+
+############################################################################################################################
+
+L1_aligned_dataset_nona_tajD_14_NOTinv1 <-  L1_aligned_dataset_nona_tajD %>% 
+  filter(scaffold=="14") %>% 
+  filter(bp_cum < (232978286+5329939)) 
+
+L1_aligned_dataset_nona_tajD_14_NOTinv1$karyo <- "notinv"
+
+L1_aligned_dataset_nona_tajD_14_NOTinv2 <-  L1_aligned_dataset_nona_tajD %>% 
+  filter(scaffold=="14") %>% 
+  filter(bp_cum > (232978286+7791197))
+L1_aligned_dataset_nona_tajD_14_NOTinv2$karyo <- "notinv"
+
+L1_aligned_dataset_nona_tajD_14_NotINV_fig <- rbind(L1_aligned_dataset_nona_tajD_14_NOTinv2, L1_aligned_dataset_nona_tajD_14_NOTinv1)
+
+L1_aligned_dataset_nona_tajD_14_inv <-  L1_aligned_dataset_nona_tajD %>% 
+  filter(scaffold=="14") %>% 
+  filter(between(bp_cum, (232978286+5329939), (232978286+7791197)))
+L1_aligned_dataset_nona_tajD_14_inv$karyo <- "inv 14"
+
+L1_aligned_dataset_nona_tajD_14 <- rbind(L1_aligned_dataset_nona_tajD_14_inv, L1_aligned_dataset_nona_tajD_14_NotINV_fig)
+
+#######################################################
+
+# TajD dataset
+### Inverted genes didnt pass?
+tajd <- rbind(L1_aligned_dataset_nona_tajD_5, L1_aligned_dataset_nona_tajD_8,L1_aligned_dataset_nona_tajD_8small_inv,L1_aligned_dataset_nona_tajD_14)
+
+L1_aligned_dataset_nona_tajD_noninv <-  L1_aligned_dataset_nona_tajD %>% 
+  filter(scaffold %in% c("1","2","3","4","6","7","9","10","11","12","13"))
+
+L1_aligned_dataset_nona_tajD_noninv$karyo <- "notinv"
+
+L1_aligned_dataset_nona_tajD_final <- rbind(L1_aligned_dataset_nona_tajD_noninv,tajd)
+
+data1 <- L1_aligned_dataset_nona_tajD_final[,c(2,8,17)]
+colnames(data1) <- c("chromosome", "TajD", "Karyo")
+data1$tajtype <- "IA"
+
+
+data2 <- L1_aligned_dataset_nona_tajD_final[,c(2,11,17)]
+colnames(data2) <- c("chromosome", "TajD", "Karyo")
+data2$tajtype <- "CP"
+
+data3 <- L1_aligned_dataset_nona_tajD_final[,c(2,14,17)]
+colnames(data3) <- c("chromosome", "TajD", "Karyo")
+data3$tajtype <- "total"
+
+loath <- rbind(data1, data2, data3)
+
+tajD_pot_L1 <- loath %>% 
+  ggplot(aes(fill=tajtype, y= TajD, x= Karyo)) +
+  geom_boxplot()
+
+png("./figures/tajD_pot_L1.png", width = 20, height = 30, units = "cm",res = 300)
+print(tajD_pot_L1)
+dev.off()
