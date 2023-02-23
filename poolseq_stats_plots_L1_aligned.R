@@ -496,8 +496,19 @@ loath <- rbind(data1, data2, data3)
 
 tajD_pot_L1 <- loath %>% 
   ggplot(aes(fill=tajtype, y= TajD, x= Karyo)) +
-  geom_boxplot()
+  geom_boxplot() 
+
 
 png("./figures/tajD_pot_L1.png", width = 20, height = 30, units = "cm",res = 300)
 print(tajD_pot_L1)
 dev.off()
+# 
+# loath %>% 
+#   group_by(Karyo, tajtype) %>% 
+#   summarise(m=mean(TajD))
+
+write.csv(L1_pi_top1_gstat, file = "L1_pi_top1_gstat.csv")
+write.csv(L1_pi_top1, file="L1_pi_top1.csv")
+write.csv(L1_pi_bottom1, file="L1_pi_bottom1.csv")
+
+

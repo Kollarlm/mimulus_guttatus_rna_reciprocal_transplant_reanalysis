@@ -120,7 +120,7 @@ S1_pi_plot <- ggplot(S1_aligned_dataset_pi_filtered, aes(x=bp_cum, y= log10(piRa
   annotate(geom = "rect", xmin=(120007578+5998986), xmax=(120007578+6260288), ymin=-Inf, ymax=Inf,
            color = "green", 
            fill = "green", alpha = 0.5)+
-  annotate(geom = "rect", xmin=(67141889+14125309), xmax=(67141889+18136144), ymin=-Inf, ymax=Inf,
+  annotate(geom = "rect", xmin=(67165139+14125309), xmax=(67165139+18136144), ymin=-Inf, ymax=Inf,
            color = "orange", 
            fill = "orange", alpha = 0.5)+
   annotate(geom = "rect", xmin=(233542315+5892556), xmax=(233542315+8677481), ymin=-Inf, ymax=Inf,
@@ -501,3 +501,7 @@ tajD_pot_S1 <- loath %>%
 png("./figures/tajD_pot_S1.png", width = 20, height = 30, units = "cm",res = 300)
 print(tajD_pot_S1)
 dev.off()
+
+write.csv(S1_pi_top1_gstat, file = "S1_pi_top1_gstat.csv")
+write.csv(S1_pi_top1, file="S1_pi_top1.csv")
+write.csv(S1_pi_top1, file="S1_pi_bottom1.csv")
